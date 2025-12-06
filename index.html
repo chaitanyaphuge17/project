@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Telecom Churn Predictor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-elevated: #0b1020;
+      --bg-soft: #111827;
+      --accent: #4f46e5;
+      --accent-soft: rgba(79, 70, 229, 0.12);
+      --accent-strong: #6366f1;
+      --accent-danger: #ef4444;
+      --accent-success: #22c55e;
+      --text: #e5e7eb;
+      --text-soft: #9ca3af;
+      --border-subtle: #1f2937;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.84);
+      --shadow-subtle: 0 10px 30px rgba(15, 23, 42, 0.7);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at top left, #1e293b 0, #020617 50%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 1200px;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.98));
+      border-radius: 28px;
+      border: 1px solid rgba(148, 163, 184, 0.08);
+      box-shadow: var(--shadow-soft);
+      padding: 24px 24px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass-accent {
+      position: absolute;
+      inset: -120px;
+      background:
+        radial-gradient(circle at 0 0, rgba(79, 70, 229, 0.35), transparent 55%),
+        radial-gradient(circle at 100% 0, rgba(236, 72, 153, 0.25), transparent 50%);
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .title-chip-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-orb {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 20%, #a855f7, #4f46e5);
+      box-shadow:
+        0 0 25px rgba(129, 140, 248, 0.7),
+        0 0 40px rgba(94, 234, 212, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: white;
+    }
+
+    .title-chip {
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      color: var(--text-soft);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(16px);
+    }
+
+    .title-chip span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.9);
+    }
+
+    .title-main {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .title-main h1 {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-main h1 span.accent {
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .tagline {
+      font-size: 11px;
+      color: #a5b4fc;
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 999px;
+      padding: 4px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+      border: 1px solid rgba(129, 140, 248, 0.5);
+    }
+
+    .tagline-pill {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #a5b4fc, #4f46e5);
+    }
+
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .threshold-pill {
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      background: rgba(22, 27, 49, 0.9);
+      border: 1px solid rgba(99, 102, 241, 0.6);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      backdrop-filter: blur(16px);
+    }
+
+    .threshold-pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.9);
+    }
+
+    .segment-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .segment-badges span {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      font-size: 11px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .header-right {
+        align-items: flex-start;
+      }
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.09), rgba(15, 23, 42, 0.96));
+      border-radius: var(--radius-lg);
+      padding: 16px 16px 14px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      box-shadow: var(--shadow-subtle);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title-pill {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #4f46e5, #0f172a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #e5e7eb;
+    }
+
+    .card-subtitle {
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 720px) {
+      .form-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    .field label {
+      color: var(--text-soft);
+    }
+
+    .field small {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .input,
+    .select {
+      width: 100%;
+      background: #020617;
+      border-radius: 10px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      padding: 7px 9px;
+      color: var(--text);
+      font-size: 12px;
+      outline: none;
+      transition: border 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .input:focus,
+    .select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.55);
+      background: #020617;
+    }
+
+    .inline-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      border: none;
+      border-radius: var(--radius-pill);
+      padding: 8px 16px;
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow:
+        0 12px 25px rgba(79, 70, 229, 0.55),
+        0 0 25px rgba(56, 189, 248, 0.3);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-0.5px);
+      filter: brightness(1.05);
+    }
+
+    .primary-btn:active {
+      transform: translateY(0.5px) scale(0.99);
+      box-shadow:
+        0 6px 16px rgba(79, 70, 229, 0.45),
+        0 0 18px rgba(56, 189, 248, 0.3);
+    }
+
+    .primary-btn span.icon {
+      font-size: 14px;
+    }
+
+    .prediction-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .pill-row span {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(31, 41, 55, 0.9);
+    }
+
+    .risk-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .risk-label {
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .risk-value {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .risk-tag {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .risk-tag.high {
+      background: rgba(248, 113, 113, 0.1);
+      border: 1px solid rgba(248, 113, 113, 0.7);
+      color: #fecaca;
+    }
+
+    .risk-tag.low {
+      background: rgba(52, 211, 153, 0.08);
+      border: 1px solid rgba(34, 197, 94, 0.8);
+      color: #bbf7d0;
+    }
+
+    .risk-tag .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+    }
+
+    .risk-tag.high .dot {
+      background: var(--accent-danger);
+      box-shadow: 0 0 10px rgba(248, 113, 113, 0.9);
+    }
+
+    .risk-tag.low .dot {
+      background: var(--accent-success);
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+    }
+
+    .gauge-wrapper {
+      margin-top: 6px;
+      background: rgba(15, 23, 42, 0.88);
+      border-radius: 14px;
+      padding: 10px 12px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+    }
+
+    .reason-list {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    @media (max-width: 720px) {
+      .reason-list {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .reason-pill {
+      background: rgba(15, 23, 42, 0.92);
+      border-radius: 11px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      padding: 7px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 11px;
+    }
+
+    .reason-pill span.key {
+      color: #c7d2fe;
+      font-weight: 500;
+    }
+
+    .reason-pill span.value {
+      color: var(--text-soft);
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 720px) {
+      .mini-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .mini-card {
+      background: rgba(15, 23, 42, 0.92);
+      border-radius: 14px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .mini-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .mini-value {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .mini-meta {
+      font-size: 11px;
+      color: #a5b4fc;
+    }
+
+    .chart-container {
+      margin-top: 6px;
+      background: rgba(15, 23, 42, 0.92);
+      border-radius: 14px;
+      padding: 10px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+    }
+
+    .footer-note {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--text-soft);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="glass-accent"></div>
+    <div class="content">
+      <header class="header">
+        <div class="title-block">
+          <div class="title-chip-row">
+            <div class="logo-orb">AI</div>
+            <div class="title-chip">
+              <span class="dot"></span>
+              <span>Telecom churn prediction</span>
+            </div>
+          </div>
+          <div class="title-main">
+            <h1>Churn <span class="accent">Predictor</span></h1>
+            <p class="subtitle">
+              Enter customer usage details to estimate churn probability from your FastAPI model.
+            </p>
+            <div class="tagline">
+              <div class="tagline-pill"></div>
+              <span>Backed by XGBoost pipeline</span>
+            </div>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="threshold-pill">
+            <span class="dot"></span>
+            <span>Churn alert threshold:&nbsp;<strong id="threshold-text">40%</strong></span>
+          </div>
+          <div class="segment-badges">
+            <span>📶 Mobile plan</span>
+            <span>📞 Usage & calls</span>
+            <span>🧾 Billing & overage</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="layout">
+        <!-- LEFT: INPUT FORM -->
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <div class="card-title-pill">1</div>
+                Customer usage profile
+              </div>
+              <div class="card-subtitle">
+                Map directly to FastAPI fields (AccountWeeks, ContractRenewal, DataPlan, etc.).
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="AccountWeeks">Account weeks</label>
+              <input id="AccountWeeks" type="number" class="input" value="50" min="0" />
+              <small>Total weeks the account has been active.</small>
+            </div>
+
+            <div class="field">
+              <label for="ContractRenewal">Contract renewal</label>
+              <select id="ContractRenewal" class="select">
+                <option value="1" selected>Yes (renewed)</option>
+                <option value="0">No (not renewed)</option>
+              </select>
+              <small>1 = renewed, 0 = not renewed.</small>
+            </div>
+
+            <div class="field">
+              <label for="DataPlan">Data plan</label>
+              <select id="DataPlan" class="select">
+                <option value="1" selected>Yes (has data plan)</option>
+                <option value="0">No data plan</option>
+              </select>
+              <small>1 = has data plan, 0 = no.</small>
+            </div>
+
+            <div class="field">
+              <label for="DataUsage">Data usage (GB)</label>
+              <input id="DataUsage" type="number" class="input" value="3.5" min="0" step="0.1" />
+              <small>Average monthly mobile data usage.</small>
+            </div>
+
+            <div class="field">
+              <label for="CustServCalls">Customer service calls</label>
+              <input id="CustServCalls" type="number" class="input" value="1" min="0" />
+              <small>Number of support calls in recent period.</small>
+            </div>
+
+            <div class="field">
+              <label for="DayMins">Day minutes</label>
+              <input id="DayMins" type="number" class="input" value="200" min="0" step="0.1" />
+              <small>Total daytime minutes used.</small>
+            </div>
+
+            <div class="field">
+              <label for="DayCalls">Day calls</label>
+              <input id="DayCalls" type="number" class="input" value="100" min="0" />
+              <small>Number of daytime calls.</small>
+            </div>
+
+            <div class="field">
+              <label for="MonthlyCharge">Monthly charge</label>
+              <input id="MonthlyCharge" type="number" class="input" value="70" min="0" step="0.1" />
+              <small>Current monthly bill amount.</small>
+            </div>
+
+            <div class="field">
+              <label for="OverageFee">Overage fee</label>
+              <input id="OverageFee" type="number" class="input" value="10" min="0" step="0.1" />
+              <small>Additional charges beyond plan.</small>
+            </div>
+
+            <div class="field">
+              <label for="RoamMins">Roaming minutes</label>
+              <input id="RoamMins" type="number" class="input" value="5" min="0" step="0.1" />
+              <small>Minutes used while roaming.</small>
+            </div>
+          </div>
+
+          <div class="inline-row">
+            <button class="primary-btn" id="predict-btn">
+              <span class="icon">🔮</span>
+              <span>Run churn prediction</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- RIGHT: OUTPUT & CHARTS -->
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <div class="card-title-pill">2</div>
+                Prediction & explanation
+              </div>
+              <div class="card-subtitle">
+                Live output from FastAPI /predict endpoint and a visual breakdown.
+              </div>
+            </div>
+          </div>
+
+          <div class="prediction-card">
+            <div class="pill-row">
+              <span id="segment-pill">Single customer | API powered</span>
+              <span id="snapshot-pill">Snapshot: latest model prediction</span>
+            </div>
+
+            <div class="risk-indicator">
+              <div>
+                <div class="risk-label">Churn probability</div>
+                <div class="risk-value" id="churn-prob">– – %</div>
+              </div>
+              <div id="risk-tag" class="risk-tag low">
+                <span class="dot"></span>
+                <span id="risk-text">Waiting for prediction</span>
+              </div>
+            </div>
+
+            <div class="gauge-wrapper">
+              <canvas id="gaugeChart" height="140"></canvas>
+            </div>
+
+            <div class="reason-list" id="reason-list"></div>
+
+            <div class="mini-grid">
+              <div class="mini-card">
+                <div class="mini-label">
+                  <span>Revenue snapshot</span>
+                  <span>₹</span>
+                </div>
+                <div class="mini-value" id="revenue-value">– –</div>
+                <div class="mini-meta" id="revenue-meta">Monthly vs lifetime estimate</div>
+              </div>
+
+              <div class="mini-card">
+                <div class="mini-label">
+                  <span>Loyalty signal</span>
+                  <span>📈</span>
+                </div>
+                <div class="mini-value" id="loyalty-score">– –</div>
+                <div class="mini-meta" id="loyalty-meta">1 = high risk, 5 = very loyal</div>
+              </div>
+            </div>
+
+            <div class="chart-container">
+              <div class="mini-label">
+                <span>Top churn drivers (heuristic)</span>
+                <span id="driver-mode">Interpreted from inputs</span>
+              </div>
+              <canvas id="driversChart" height="130"></canvas>
+            </div>
+
+            <div class="footer-note">
+              <span>Make sure FastAPI is running on http://127.0.0.1:8000 with CORS enabled.</span>
+              <span>Fields are mapped directly to your CustomerInput model.</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const threshold = 0.4;
+    document.getElementById("threshold-text").textContent = Math.round(threshold * 100) + "%";
+    const PREDICT_API = "http://127.0.0.1:8000/predict";
+
+    let gaugeChart;
+    let driversChart;
+
+    function createGauge(prob) {
+      const ctx = document.getElementById("gaugeChart").getContext("2d");
+      if (gaugeChart) gaugeChart.destroy();
+      const value = Math.round(prob * 100);
+
+      const gradient = ctx.createLinearGradient(0, 0, 300, 0);
+      gradient.addColorStop(0, "rgba(34,197,94,0.9)");
+      gradient.addColorStop(0.5, "rgba(234,179,8,0.9)");
+      gradient.addColorStop(1, "rgba(248,113,113,0.95)");
+
+      gaugeChart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["Churn", "Safe"],
+          datasets: [
+            {
+              data: [value, 100 - value],
+              backgroundColor: [gradient, "rgba(15,23,42,0.9)"],
+              borderWidth: 0,
+              cutout: "72%",
+            },
+          ],
+        },
+        options: {
+          rotation: -90,
+          circumference: 180,
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false },
+          },
+        },
+      });
+    }
+
+    function createDriversChart(drivers) {
+      const ctx = document.getElementById("driversChart").getContext("2d");
+      if (driversChart) driversChart.destroy();
+
+      driversChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: drivers.map(d => d.name),
+          datasets: [
+            {
+              label: "Impact on churn",
+              data: drivers.map(d => d.value),
+              backgroundColor: "rgba(129,140,248,0.85)",
+              borderRadius: 6,
+            },
+          ],
+        },
+        options: {
+          indexAxis: "y",
+          scales: {
+            x: {
+              ticks: { color: "#9ca3af", display: false },
+              grid: { display: false },
+              min: 0,
+              max: 1,
+            },
+            y: {
+              ticks: { color: "#e5e7eb", font: { size: 10 } },
+              grid: { display: false },
+            },
+          },
+          plugins: {
+            legend: { display: false },
+          },
+        },
+      });
+    }
+
+    function updateRisk(prob, riskLevel) {
+      const pct = Math.round(prob * 100);
+      const riskTag = document.getElementById("risk-tag");
+      const riskText = document.getElementById("risk-text");
+      const churnProbEl = document.getElementById("churn-prob");
+
+      churnProbEl.textContent = pct + " %";
+
+      if (riskLevel === "high" || prob >= threshold) {
+        riskTag.classList.remove("low");
+        riskTag.classList.add("high");
+        riskText.textContent = "High churn risk";
+      } else {
+        riskTag.classList.remove("high");
+        riskTag.classList.add("low");
+        riskText.textContent = riskLevel === "medium" ? "Medium churn risk" : "Low churn risk";
+      }
+    }
+
+    function updateReasons(prob, features) {
+      const list = document.getElementById("reason-list");
+      list.innerHTML = "";
+
+      const reasons = [];
+
+      if (features.AccountWeeks < 20) {
+        reasons.push({
+          key: "Short account age",
+          value: "Newer customers are more likely to experiment with other providers.",
+        });
+      } else {
+        reasons.push({
+          key: "Stable relationship",
+          value: "Customer has stayed for many weeks, indicating some loyalty.",
+        });
+      }
+
+      if (!features.ContractRenewal) {
+        reasons.push({
+          key: "No contract renewal",
+          value: "Not renewing can signal dissatisfaction or upcoming churn.",
+        });
+      } else {
+        reasons.push({
+          key: "Recent renewal",
+          value: "Renewal suggests commitment to the current provider.",
+        });
+      }
+
+      if (features.CustServCalls > 3) {
+        reasons.push({
+          key: "Frequent support calls",
+          value: "High support interactions may indicate unresolved issues.",
+        });
+      }
+
+      if (features.OverageFee > 0) {
+        reasons.push({
+          key: "Overage charges",
+          value: "Extra fees beyond plan may push the customer to seek alternatives.",
+        });
+      }
+
+      if (reasons.length === 0) {
+        reasons.push({
+          key: "Neutral risk profile",
+          value: "Usage and billing are within typical ranges.",
+        });
+      }
+
+      reasons.slice(0, 4).forEach(r => {
+        const div = document.createElement("div");
+        div.className = "reason-pill";
+        div.innerHTML = `<span class="key">${r.key}</span><span class="value">${r.value}</span>`;
+        list.appendChild(div);
+      });
+    }
+
+    function updateMiniCards(features, prob) {
+      const revenueValue = document.getElementById("revenue-value");
+      const revenueMeta = document.getElementById("revenue-meta");
+      const loyaltyScore = document.getElementById("loyalty-score");
+      const loyaltyMeta = document.getElementById("loyalty-meta");
+
+      const monthly = Number(features.MonthlyCharge) || 0;
+      const weeks = Number(features.AccountWeeks) || 0;
+      const monthsApprox = weeks / 4.3;
+      const totalRevenue = monthly * monthsApprox;
+
+      revenueValue.textContent = `₹${Math.round(totalRevenue).toLocaleString("en-IN")}`;
+      revenueMeta.textContent = `Monthly: ₹${monthly.toLocaleString("en-IN")} | Account age: ${weeks} weeks`;
+
+      let score;
+      if (prob >= 0.7) score = 1;
+      else if (prob >= 0.5) score = 2;
+      else if (prob >= 0.3) score = 3;
+      else if (prob >= 0.15) score = 4;
+      else score = 5;
+
+      loyaltyScore.textContent = score.toFixed(1);
+      loyaltyMeta.textContent = `Model‑inspired loyalty band (lower churn ⇒ higher score).`;
+    }
+
+    function buildDrivers(features) {
+      return [
+        {
+          name: "Account weeks",
+          value: Math.min(features.AccountWeeks / 80, 1),
+        },
+        {
+          name: "Cust. service calls",
+          value: Math.min(features.CustServCalls / 8, 1),
+        },
+        {
+          name: "Monthly charge",
+          value: Math.min(features.MonthlyCharge / 100, 1),
+        },
+        {
+          name: "Overage fee",
+          value: Math.min(features.OverageFee / 40, 1),
+        },
+      ];
+    }
+
+    async function callApiPredict(payload) {
+      const res = await fetch(PREDICT_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("API error: " + res.status);
+      const data = await res.json();
+      window.lastRiskLevel = data.risk_level;
+      return data.churn_probability;
+    }
+
+    document.getElementById("predict-btn").addEventListener("click", async () => {
+      const features = {
+        AccountWeeks: Number(document.getElementById("AccountWeeks").value || 0),
+        ContractRenewal: Number(document.getElementById("ContractRenewal").value || 0),
+        DataPlan: Number(document.getElementById("DataPlan").value || 0),
+        DataUsage: Number(document.getElementById("DataUsage").value || 0),
+        CustServCalls: Number(document.getElementById("CustServCalls").value || 0),
+        DayMins: Number(document.getElementById("DayMins").value || 0),
+        DayCalls: Number(document.getElementById("DayCalls").value || 0),
+        MonthlyCharge: Number(document.getElementById("MonthlyCharge").value || 0),
+        OverageFee: Number(document.getElementById("OverageFee").value || 0),
+        RoamMins: Number(document.getElementById("RoamMins").value || 0),
+      };
+
+      const btn = document.getElementById("predict-btn");
+      const originalLabel = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="icon">✨</span><span>Scoring profile…</span>';
+
+      try {
+        const prob = await callApiPredict(features);
+        const riskLevel = window.lastRiskLevel || "low";
+        updateRisk(prob, riskLevel);
+        createGauge(prob);
+        updateReasons(prob, features);
+        updateMiniCards(features, prob);
+        createDriversChart(buildDrivers(features));
+      } catch (err) {
+        alert("Prediction failed. Check console for details.");
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalLabel;
+      }
+    });
+
+    // Initial placeholder state
+    createGauge(0.2);
+    createDriversChart([
+      { name: "Account weeks", value: 0.5 },
+      { name: "Cust. service calls", value: 0.3 },
+      { name: "Monthly charge", value: 0.4 },
+      { name: "Overage fee", value: 0.2 },
+    ]);
+    updateRisk(0.2, "low");
+    updateReasons(0.2, {
+      AccountWeeks: 50,
+      ContractRenewal: 1,
+      CustServCalls: 1,
+      OverageFee: 10,
+    });
+    updateMiniCards(
+      {
+        AccountWeeks: 50,
+        MonthlyCharge: 70,
+      },
+      0.2
+    );
+  </script>
+</body>
+</html>
