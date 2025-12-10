@@ -815,243 +815,264 @@
   </div>
 
   <script>
-    const PREDICT_API = "/predict";
-;
+  const PREDICT_API = "/predict";   // backend & frontend on same server
 
-    const THRESHOLD = 0.4;
+  const THRESHOLD = 0.4;
 
-    let gaugeChart = null;
-    let driversChart = null;
+  let gaugeChart = null;
+  let driversChart = null;
 
-    // Page navigation
-    function showPage(pageId) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.getElementById(pageId).classList.add('active');
-      window.scrollTo(0, 0);
-    }
+  // Page navigation
+  function showPage(pageId) {
+    document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
+    document.getElementById(pageId).classList.add("active");
+    window.scrollTo(0, 0);
+  }
 
-    document.getElementById('back-btn').addEventListener('click', () => showPage('input-page'));
+  document.getElementById("back-btn").addEventListener("click", () => showPage("input-page"));
 
-    // Get features from form
-    function getFeatures() {
-      return {
-        AccountWeeks: Number(document.getElementById('AccountWeeks').value) || 0,
-        ContractRenewal: Number(document.getElementById('ContractRenewal').value) || 0,
-        DataPlan: Number(document.getElementById('DataPlan').value) || 0,
-        DataUsage: Number(document.getElementById('DataUsage').value) || 0,
-        CustServCalls: Number(document.getElementById('CustServCalls').value) || 0,
-        DayMins: Number(document.getElementById('DayMins').value) || 0,
-        DayCalls: Number(document.getElementById('DayCalls').value) || 0,
-        MonthlyCharge: Number(document.getElementById('MonthlyCharge').value) || 0,
-        OverageFee: Number(document.getElementById('OverageFee').value) || 0,
-        RoamMins: Number(document.getElementById('RoamMins').value) || 0,
-      };
-    }
+  // Get features from form
+  function getFeatures() {
+    return {
+      AccountWeeks: Number(document.getElementById("AccountWeeks").value) || 0,
+      ContractRenewal: Number(document.getElementById("ContractRenewal").value) || 0,
+      DataPlan: Number(document.getElementById("DataPlan").value) || 0,
+      DataUsage: Number(document.getElementById("DataUsage").value) || 0,
+      CustServCalls: Number(document.getElementById("CustServCalls").value) || 0,
+      DayMins: Number(document.getElementById("DayMins").value) || 0,
+      DayCalls: Number(document.getElementById("DayCalls").value) || 0,
+      MonthlyCharge: Number(document.getElementById("MonthlyCharge").value) || 0,
+      OverageFee: Number(document.getElementById("OverageFee").value) || 0,
+      RoamMins: Number(document.getElementById("RoamMins").value) || 0,
+    };
+  }
 
-    // API call
-    async function callPredict(payload) {
-  const res = await fetch(PREDICT_API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("API error: " + res.status);
-  return res.json();
-}
+  // API call
+  async function callPredict(payload) {
+    const res = await fetch(PREDICT_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error("API error: " + res.status);
+    return res.json();
+  }
 
+  // Create gauge chart
+  function createGauge(prob) {
+    const ctx = document.getElementById("gaugeChart").getContext("2d");
+    if (gaugeChart) gaugeChart.destroy();
 
-    // Create gauge chart
-    function createGauge(prob) {
-      const ctx = document.getElementById('gaugeChart').getContext('2d');
-      if (gaugeChart) gaugeChart.destroy();
+    const value = prob * 100;
 
-      const value = prob * 100;
-
-      gaugeChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          datasets: [{
+    gaugeChart = new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        datasets: [
+          {
             data: [value, 100 - value],
-            backgroundColor: [
-              createGradient(ctx),
-              'hsla(230, 25%, 15%, 0.8)'
-            ],
+            backgroundColor: [createGradient(ctx), "hsla(230, 25%, 15%, 0.8)"],
             borderWidth: 0,
-            cutout: '78%',
-          }]
-        },
-        options: {
-          rotation: -90,
-          circumference: 180,
-          responsive: false,
-          plugins: { legend: { display: false }, tooltip: { enabled: false } }
-        }
-      });
+            cutout: "78%",
+          },
+        ],
+      },
+      options: {
+        rotation: -90,
+        circumference: 180,
+        responsive: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      },
+    });
 
-      document.getElementById('prob-value').textContent = Math.round(value) + '%';
-    }
+    document.getElementById("prob-value").textContent = Math.round(value) + "%";
+  }
 
-    function createGradient(ctx) {
-      const gradient = ctx.createLinearGradient(0, 0, 200, 0);
-      gradient.addColorStop(0, 'hsl(174, 72%, 56%)');
-      gradient.addColorStop(1, 'hsl(280, 70%, 65%)');
-      return gradient;
-    }
+  function createGradient(ctx) {
+    const gradient = ctx.createLinearGradient(0, 0, 200, 0);
+    gradient.addColorStop(0, "hsl(174, 72%, 56%)");
+    gradient.addColorStop(1, "hsl(280, 70%, 65%)");
+    return gradient;
+  }
 
-    // Create drivers chart
-    function createDriversChart(drivers) {
-      const ctx = document.getElementById('driversChart').getContext('2d');
-      if (driversChart) driversChart.destroy();
+  // Drivers chart
+  function createDriversChart(drivers) {
+    const ctx = document.getElementById("driversChart").getContext("2d");
+    if (driversChart) driversChart.destroy();
 
-      driversChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: drivers.map(d => d.name),
-          datasets: [{
-            data: drivers.map(d => d.value * 100),
-            backgroundColor: drivers.map((_, i) => i % 2 === 0 ? 'hsl(174, 72%, 56%)' : 'hsl(280, 70%, 65%)'),
+    driversChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: drivers.map((d) => d.name),
+        datasets: [
+          {
+            data: drivers.map((d) => d.value * 100),
+            backgroundColor: drivers.map((_, i) =>
+              i % 2 === 0 ? "hsl(174, 72%, 56%)" : "hsl(280, 70%, 65%)"
+            ),
             borderRadius: 6,
             maxBarThickness: 28,
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              display: false,
-              max: 100,
-            },
-            y: {
-              ticks: { color: 'hsl(180, 100%, 97%)', font: { size: 12 } },
-              grid: { display: false },
-              border: { display: false }
-            }
           },
-          plugins: { legend: { display: false } }
-        }
+        ],
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { display: false, max: 100 },
+          y: {
+            ticks: { color: "hsl(180, 100%, 97%)", font: { size: 12 } },
+            grid: { display: false },
+            border: { display: false },
+          },
+        },
+        plugins: { legend: { display: false } },
+      },
+    });
+  }
+
+  // Update risk
+  function updateRisk(prob) {
+    const tag = document.getElementById("risk-tag");
+    const text = document.getElementById("risk-text");
+
+    tag.classList.remove("high", "medium", "low");
+
+    if (prob >= THRESHOLD) {
+      tag.classList.add("high");
+      text.textContent = "High Churn Risk";
+    } else if (prob >= 0.25) {
+      tag.classList.add("medium");
+      text.textContent = "Medium Churn Risk";
+    } else {
+      tag.classList.add("low");
+      text.textContent = "Low Churn Risk";
+    }
+  }
+
+  // Reasons
+  function buildReasons(prob, features) {
+    const reasons = [];
+
+    if (features.AccountWeeks < 20) {
+      reasons.push({
+        key: "Short account age",
+        value: "New users switch providers more frequently.",
+      });
+    } else {
+      reasons.push({
+        key: "Stable relationship",
+        value: "Customer has stayed long, indicating loyalty.",
       });
     }
 
-    // Update risk display
-    function updateRisk(prob) {
-      const tag = document.getElementById('risk-tag');
-      const text = document.getElementById('risk-text');
-
-      tag.classList.remove('high', 'medium', 'low');
-
-      if (prob >= THRESHOLD) {
-        tag.classList.add('high');
-        text.textContent = 'High Churn Risk';
-      } else if (prob >= 0.25) {
-        tag.classList.add('medium');
-        text.textContent = 'Medium Churn Risk';
-      } else {
-        tag.classList.add('low');
-        text.textContent = 'Low Churn Risk';
-      }
+    if (!features.ContractRenewal) {
+      reasons.push({
+        key: "No contract renewal",
+        value: "Not renewing may indicate dissatisfaction.",
+      });
+    } else {
+      reasons.push({
+        key: "Recent renewal",
+        value: "Renewed customers usually stay longer.",
+      });
     }
 
-    // Build reasons
-    function buildReasons(prob, features) {
-      const reasons = [];
-
-      if (features.AccountWeeks < 20) {
-        reasons.push({ key: 'Short account age', value: 'Newer customers are more likely to experiment with other providers.' });
-      } else {
-        reasons.push({ key: 'Stable relationship', value: 'Customer has stayed for many weeks, indicating some loyalty.' });
-      }
-
-      if (!features.ContractRenewal) {
-        reasons.push({ key: 'No contract renewal', value: 'Not renewing can signal dissatisfaction or upcoming churn.' });
-      } else {
-        reasons.push({ key: 'Recent renewal', value: 'Renewal suggests commitment to the current provider.' });
-      }
-
-      if (features.CustServCalls > 3) {
-        reasons.push({ key: 'Frequent support calls', value: 'High support interactions may indicate unresolved issues.' });
-      }
-
-      if (features.OverageFee > 0) {
-        reasons.push({ key: 'Overage charges', value: 'Extra fees beyond plan may push the customer to seek alternatives.' });
-      }
-
-      return reasons.slice(0, 4);
+    if (features.CustServCalls > 3) {
+      reasons.push({
+        key: "Frequent support calls",
+        value: "High support usage indicates frustration.",
+      });
     }
 
-    // Update reasons display
-    function updateReasons(reasons) {
-      const container = document.getElementById('reasons-list');
-      container.innerHTML = reasons.map(r => `
-        <div class="reason-card">
-          <div class="key">${r.key}</div>
-          <div class="value">${r.value}</div>
-        </div>
-      `).join('');
+    if (features.OverageFee > 0) {
+      reasons.push({
+        key: "Overage charges",
+        value: "Extra fees increase churn likelihood.",
+      });
     }
 
-    // Update metrics
-    function updateMetrics(features, prob) {
-      const monthly = features.MonthlyCharge || 0;
-      const weeks = features.AccountWeeks || 0;
-      const total = Math.round(monthly * (weeks / 4.3));
+    return reasons.slice(0, 4);
+  }
 
-      document.getElementById('revenue-value').textContent = '₹' + total.toLocaleString('en-IN');
-      document.getElementById('revenue-meta').textContent = `Monthly: ₹${monthly.toLocaleString('en-IN')} | Account age: ${weeks} weeks`;
+  function updateReasons(reasons) {
+    document.getElementById("reasons-list").innerHTML = reasons
+      .map(
+        (r) => `
+      <div class="reason-card">
+        <div class="key">${r.key}</div>
+        <div class="value">${r.value}</div>
+      </div>`
+      )
+      .join("");
+  }
 
-      let loyalty;
-      if (prob >= 0.7) loyalty = 1;
-      else if (prob >= 0.5) loyalty = 2;
-      else if (prob >= 0.3) loyalty = 3;
-      else if (prob >= 0.15) loyalty = 4;
-      else loyalty = 5;
+  // Metrics
+  function updateMetrics(features, prob) {
+    const monthly = features.MonthlyCharge || 0;
+    const weeks = features.AccountWeeks || 0;
+    const total = Math.round(monthly * (weeks / 4.3));
 
-      document.getElementById('loyalty-value').textContent = loyalty.toFixed(1) + ' / 5';
+    document.getElementById("revenue-value").textContent = "₹" + total.toLocaleString("en-IN");
+    document.getElementById("revenue-meta").textContent = `Monthly: ₹${monthly.toLocaleString(
+      "en-IN"
+    )} | Account age: ${weeks} weeks`;
+
+    let loyalty;
+    if (prob >= 0.7) loyalty = 1;
+    else if (prob >= 0.5) loyalty = 2;
+    else if (prob >= 0.3) loyalty = 3;
+    else if (prob >= 0.15) loyalty = 4;
+    else loyalty = 5;
+
+    document.getElementById("loyalty-value").textContent = loyalty.toFixed(1) + " / 5";
+  }
+
+  // Build drivers
+  function buildDrivers(features) {
+    return [
+      { name: "Account weeks", value: Math.min(features.AccountWeeks / 80, 1) },
+      { name: "Cust. service calls", value: Math.min(features.CustServCalls / 8, 1) },
+      { name: "Monthly charge", value: Math.min(features.MonthlyCharge / 100, 1) },
+      { name: "Overage fee", value: Math.min(features.OverageFee / 40, 1) },
+    ];
+  }
+
+  // MAIN PREDICT BUTTON HANDLER (FIXED ✔)
+  document.getElementById("predict-btn").addEventListener("click", async () => {
+    const btn = document.getElementById("predict-btn");
+    const originalText = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳</span><span>Analyzing Profile...</span>';
+
+    try {
+      const features = getFeatures();
+
+      // FIX: extract only the probability value
+      const response = await callPredict(features);
+      const prob = response.churn_probability; // FIX 🟢
+
+      // Move to results page
+      showPage("results-page");
+
+      setTimeout(() => {
+        createGauge(prob);
+        updateRisk(prob);
+        updateReasons(buildReasons(prob, features));
+        updateMetrics(features, prob);
+        createDriversChart(buildDrivers(features));
+      }, 100);
+    } catch (err) {
+      alert("Prediction failed. Please check if the API is running.");
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
     }
+  });
+</script>
 
-    // Build drivers
-    function buildDrivers(features) {
-      return [
-        { name: 'Account weeks', value: Math.min(features.AccountWeeks / 80, 1) },
-        { name: 'Cust. service calls', value: Math.min(features.CustServCalls / 8, 1) },
-        { name: 'Monthly charge', value: Math.min(features.MonthlyCharge / 100, 1) },
-        { name: 'Overage fee', value: Math.min(features.OverageFee / 40, 1) },
-      ];
-    }
-
-    // Main predict handler
-    document.getElementById('predict-btn').addEventListener('click', async () => {
-      const btn = document.getElementById('predict-btn');
-      const originalText = btn.innerHTML;
-
-      btn.disabled = true;
-      btn.innerHTML = '<span>⏳</span><span>Analyzing Profile...</span>';
-
-      try {
-        const features = getFeatures();
-        const prob = await callPredict(features);
-
-        // Switch to results page
-        showPage('results-page');
-
-        // Update all displays
-        setTimeout(() => {
-          createGauge(prob);
-          updateRisk(prob);
-          updateReasons(buildReasons(prob, features));
-          updateMetrics(features, prob);
-          createDriversChart(buildDrivers(features));
-        }, 100);
-
-      } catch (err) {
-        alert('Prediction failed. Please check if the API is running.');
-        console.error(err);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-      }
-    });
-  </script>
 </body>
 </html>
