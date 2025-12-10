@@ -2,28 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Telecom Churn Predictor</title>
+  <title>Telecom Churn Predictor | AI-Powered Analytics</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Predict customer churn probability using AI-powered XGBoost model." />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg: #050816;
-      --bg-elevated: #0b1020;
-      --bg-soft: #111827;
-      --accent: #4f46e5;
-      --accent-soft: rgba(79, 70, 229, 0.12);
-      --accent-strong: #6366f1;
-      --accent-danger: #ef4444;
-      --accent-success: #22c55e;
-      --text: #e5e7eb;
-      --text-soft: #9ca3af;
-      --border-subtle: #1f2937;
-      --radius-lg: 18px;
-      --radius-md: 12px;
-      --radius-pill: 999px;
-      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.84);
-      --shadow-subtle: 0 10px 30px rgba(15, 23, 42, 0.7);
+      --bg: hsl(230, 25%, 7%);
+      --bg-card: hsl(230, 30%, 10%);
+      --bg-input: hsl(230, 25%, 14%);
+      --primary: hsl(174, 72%, 56%);
+      --primary-dark: hsl(174, 72%, 20%);
+      --accent: hsl(280, 70%, 65%);
+      --success: hsl(160, 84%, 45%);
+      --warning: hsl(45, 93%, 58%);
+      --destructive: hsl(0, 72%, 60%);
+      --text: hsl(180, 100%, 97%);
+      --text-muted: hsl(220, 15%, 60%);
+      --border: hsl(230, 20%, 20%);
+      --radius: 16px;
+      --radius-sm: 12px;
     }
 
     * {
@@ -33,996 +32,1024 @@
     }
 
     body {
-      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: radial-gradient(circle at top left, #1e293b 0, #020617 50%);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      background-image: 
+        radial-gradient(ellipse 80% 50% at 20% -20%, hsla(280, 70%, 25%, 0.4), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 0%, hsla(174, 72%, 30%, 0.3), transparent),
+        radial-gradient(ellipse 100% 100% at 50% 100%, hsl(230, 40%, 12%), var(--bg));
       color: var(--text);
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      padding: 32px 16px;
+      line-height: 1.6;
     }
 
-    .app-shell {
-      width: 100%;
-      max-width: 1200px;
-      background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.98));
-      border-radius: 28px;
-      border: 1px solid rgba(148, 163, 184, 0.08);
-      box-shadow: var(--shadow-soft);
-      padding: 24px 24px 28px;
-      position: relative;
-      overflow: hidden;
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
     }
 
-    .glass-accent {
-      position: absolute;
-      inset: -120px;
-      background:
-        radial-gradient(circle at 0 0, rgba(79, 70, 229, 0.35), transparent 55%),
-        radial-gradient(circle at 100% 0, rgba(236, 72, 153, 0.25), transparent 50%);
-      opacity: 0.35;
-      pointer-events: none;
-      z-index: 0;
+    /* Page transitions */
+    .page {
+      display: none;
+      animation: fadeSlideIn 0.5s ease-out;
     }
 
-    .content {
-      position: relative;
-      z-index: 1;
+    .page.active {
+      display: block;
     }
 
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 20px hsla(174, 72%, 56%, 0.4), 0 0 40px hsla(280, 70%, 65%, 0.2); }
+      50% { box-shadow: 0 0 30px hsla(174, 72%, 56%, 0.6), 0 0 60px hsla(280, 70%, 65%, 0.3); }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* Header */
     .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 20px;
+      margin-bottom: 2.5rem;
     }
 
-    .title-block {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .title-chip-row {
+    .header-top {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
 
     .logo-orb {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 20%, #a855f7, #4f46e5);
-      box-shadow:
-        0 0 25px rgba(129, 140, 248, 0.7),
-        0 0 40px rgba(94, 234, 212, 0.35);
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
-      font-size: 16px;
-      color: white;
+      font-size: 20px;
+      animation: pulseGlow 3s ease-in-out infinite, float 6s ease-in-out infinite;
     }
 
-    .title-chip {
-      padding: 4px 12px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      color: var(--text-soft);
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      backdrop-filter: blur(16px);
-    }
-
-    .title-chip span.dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: #22c55e;
-      box-shadow: 0 0 8px rgba(34, 197, 94, 0.9);
-    }
-
-    .title-main {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .title-main h1 {
-      font-size: 24px;
-      font-weight: 600;
-      letter-spacing: -0.03em;
-      display: flex;
+    .status-badge {
+      display: inline-flex;
       align-items: center;
       gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: hsla(230, 25%, 15%, 0.6);
+      border: 1px solid hsla(174, 72%, 56%, 0.2);
+      font-size: 12px;
+      color: var(--primary);
+      backdrop-filter: blur(8px);
     }
 
-    .title-main h1 span.accent {
-      background: linear-gradient(135deg, #6366f1, #a855f7);
+    .status-badge .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .title {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .title .gradient {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
     }
 
     .subtitle {
-      font-size: 13px;
-      color: var(--text-soft);
+      color: var(--text-muted);
+      font-size: 1rem;
+      max-width: 600px;
     }
 
-    .tagline {
-      font-size: 11px;
-      color: #a5b4fc;
-      background: rgba(15, 23, 42, 0.9);
-      border-radius: 999px;
-      padding: 4px 10px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 2px;
-      border: 1px solid rgba(129, 140, 248, 0.5);
-    }
-
-    .tagline-pill {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 30% 30%, #a5b4fc, #4f46e5);
-    }
-
-    .header-right {
+    .tags {
       display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 8px;
-      font-size: 11px;
-      color: var(--text-soft);
-    }
-
-    .threshold-pill {
-      padding: 6px 12px;
-      border-radius: var(--radius-pill);
-      background: rgba(22, 27, 49, 0.9);
-      border: 1px solid rgba(99, 102, 241, 0.6);
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      backdrop-filter: blur(16px);
-    }
-
-    .threshold-pill .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--accent);
-      box-shadow: 0 0 10px rgba(99, 102, 241, 0.9);
-    }
-
-    .segment-badges {
-      display: flex;
-      gap: 6px;
       flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 1.5rem;
     }
 
-    .segment-badges span {
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      font-size: 11px;
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      backdrop-filter: blur(8px);
     }
 
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-      gap: 18px;
+    .tag-primary {
+      background: linear-gradient(135deg, hsla(174, 72%, 56%, 0.15), hsla(174, 72%, 56%, 0.05));
+      border: 1px solid hsla(174, 72%, 56%, 0.3);
+      color: var(--primary);
     }
 
-    @media (max-width: 960px) {
-      .layout {
-        grid-template-columns: minmax(0, 1fr);
-      }
-      .header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .header-right {
-        align-items: flex-start;
-      }
+    .tag-accent {
+      background: linear-gradient(135deg, hsla(280, 70%, 65%, 0.15), hsla(280, 70%, 65%, 0.05));
+      border: 1px solid hsla(280, 70%, 65%, 0.3);
+      color: var(--accent);
     }
 
-    .card {
-      background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.09), rgba(15, 23, 42, 0.96));
-      border-radius: var(--radius-lg);
-      padding: 16px 16px 14px;
-      border: 1px solid rgba(31, 41, 55, 0.9);
-      box-shadow: var(--shadow-subtle);
+    .tag-success {
+      background: linear-gradient(135deg, hsla(160, 84%, 45%, 0.15), hsla(160, 84%, 45%, 0.05));
+      border: 1px solid hsla(160, 84%, 45%, 0.3);
+      color: var(--success);
+    }
+
+    /* Glass Card */
+    .glass-card {
+      background: hsla(230, 30%, 10%, 0.7);
+      backdrop-filter: blur(24px);
+      border: 1px solid hsla(230, 20%, 20%, 0.4);
+      border-radius: var(--radius);
+      padding: 2rem;
+      box-shadow: 0 8px 32px hsla(230, 50%, 3%, 0.5), inset 0 1px 0 0 hsla(180, 100%, 97%, 0.05);
       position: relative;
       overflow: hidden;
     }
 
     .card-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      gap: 1rem;
+      margin-bottom: 2rem;
     }
 
-    .card-title {
-      font-size: 14px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .card-title-pill {
-      width: 18px;
-      height: 18px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 30% 30%, #4f46e5, #0f172a);
+    .card-number {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, hsla(174, 72%, 56%, 0.3), hsla(280, 70%, 65%, 0.2));
+      border: 1px solid hsla(174, 72%, 56%, 0.3);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
-      color: #e5e7eb;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .card-title {
+      font-size: 1.125rem;
+      font-weight: 600;
     }
 
     .card-subtitle {
-      font-size: 11px;
-      color: var(--text-soft);
+      font-size: 0.875rem;
+      color: var(--text-muted);
     }
 
+    /* Form */
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 8px;
-    }
-
-    @media (max-width: 720px) {
-      .form-grid {
-        grid-template-columns: minmax(0, 1fr);
-      }
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.25rem;
     }
 
     .field {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      font-size: 12px;
+      gap: 6px;
     }
 
     .field label {
-      color: var(--text-soft);
+      font-size: 14px;
+      color: var(--text-muted);
     }
 
     .field small {
-      font-size: 11px;
-      color: #6b7280;
-    }
-
-    .input,
-    .select {
-      width: 100%;
-      background: #020617;
-      border-radius: 10px;
-      border: 1px solid rgba(31, 41, 55, 0.95);
-      padding: 7px 9px;
-      color: var(--text);
       font-size: 12px;
+      color: hsla(220, 15%, 60%, 0.7);
+    }
+
+    .input, .select {
+      width: 100%;
+      background: hsla(230, 25%, 14%, 0.8);
+      border: 1px solid hsla(230, 20%, 20%, 0.6);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
       outline: none;
-      transition: border 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(8px);
     }
 
-    .input:focus,
-    .select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.55);
-      background: #020617;
+    .input:hover, .select:hover {
+      border-color: var(--border);
     }
 
-    .inline-row {
+    .input:focus, .select:focus {
+      border-color: hsla(174, 72%, 56%, 0.6);
+      box-shadow: 0 0 0 3px hsla(174, 72%, 56%, 0.15);
+    }
+
+    .select {
+      appearance: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2356d4c8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      background-size: 16px;
+      padding-right: 44px;
+    }
+
+    .btn-row {
       display: flex;
-      align-items: center;
       justify-content: flex-end;
-      gap: 8px;
-      margin-top: 10px;
+      margin-top: 2rem;
     }
 
-    .primary-btn {
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 32px;
       border: none;
-      border-radius: var(--radius-pill);
-      padding: 8px 16px;
-      color: white;
-      font-size: 13px;
-      font-weight: 500;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: hsl(230, 25%, 7%);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 30px hsla(174, 72%, 56%, 0.4), 0 0 20px hsla(280, 70%, 65%, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, hsla(180, 100%, 97%, 0.15), transparent 50%);
+      pointer-events: none;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 8px 40px hsla(174, 72%, 56%, 0.5), 0 0 30px hsla(280, 70%, 65%, 0.3);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-back {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      cursor: pointer;
-      box-shadow:
-        0 12px 25px rgba(79, 70, 229, 0.55),
-        0 0 25px rgba(56, 189, 248, 0.3);
-      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
-    }
-
-    .primary-btn:hover {
-      transform: translateY(-0.5px);
-      filter: brightness(1.05);
-    }
-
-    .primary-btn:active {
-      transform: translateY(0.5px) scale(0.99);
-      box-shadow:
-        0 6px 16px rgba(79, 70, 229, 0.45),
-        0 0 18px rgba(56, 189, 248, 0.3);
-    }
-
-    .primary-btn span.icon {
+      padding: 10px 16px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
       font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 1.5rem;
     }
 
+    .btn-back:hover {
+      color: var(--text);
+    }
+
+    .btn-back:hover svg {
+      transform: translateX(-4px);
+    }
+
+    .btn-back svg {
+      transition: transform 0.2s ease;
+    }
+
+    /* Results Page */
+    .results-header {
+      margin-bottom: 2rem;
+    }
+
+    .results-header .status-badge {
+      margin-bottom: 1rem;
+    }
+
+    /* Prediction Card */
     .prediction-card {
+      text-align: center;
+      padding: 3rem 2rem;
+      position: relative;
+    }
+
+    .prediction-card .glow-tl {
+      position: absolute;
+      top: -80px;
+      right: -80px;
+      width: 160px;
+      height: 160px;
+      background: hsla(174, 72%, 56%, 0.2);
+      border-radius: 50%;
+      filter: blur(60px);
+      pointer-events: none;
+    }
+
+    .prediction-card .glow-br {
+      position: absolute;
+      bottom: -80px;
+      left: -80px;
+      width: 160px;
+      height: 160px;
+      background: hsla(280, 70%, 65%, 0.2);
+      border-radius: 50%;
+      filter: blur(60px);
+      pointer-events: none;
+    }
+
+    .prob-label {
+      font-size: 14px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.5rem;
+    }
+
+    .gauge-container {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .gauge-container canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .gauge-value {
+      position: absolute;
+      inset: 0;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-    }
-
-    .pill-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      font-size: 11px;
-      color: var(--text-soft);
-    }
-
-    .pill-row span {
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(31, 41, 55, 0.9);
-    }
-
-    .risk-indicator {
-      display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
+      justify-content: center;
     }
 
-    .risk-label {
-      font-size: 13px;
-      color: var(--text-soft);
+    .gauge-value .percent {
+      font-size: 3rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
 
-    .risk-value {
-      font-size: 20px;
-      font-weight: 600;
+    .gauge-value .label {
+      font-size: 12px;
+      color: var(--text-muted);
     }
 
     .risk-tag {
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 11px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-    }
-
-    .risk-tag.high {
-      background: rgba(248, 113, 113, 0.1);
-      border: 1px solid rgba(248, 113, 113, 0.7);
-      color: #fecaca;
-    }
-
-    .risk-tag.low {
-      background: rgba(52, 211, 153, 0.08);
-      border: 1px solid rgba(34, 197, 94, 0.8);
-      color: #bbf7d0;
-    }
-
-    .risk-tag .dot {
-      width: 7px;
-      height: 7px;
+      gap: 10px;
+      padding: 10px 20px;
       border-radius: 999px;
-    }
-
-    .risk-tag.high .dot {
-      background: var(--accent-danger);
-      box-shadow: 0 0 10px rgba(248, 113, 113, 0.9);
-    }
-
-    .risk-tag.low .dot {
-      background: var(--accent-success);
-      box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
-    }
-
-    .gauge-wrapper {
-      margin-top: 6px;
-      background: rgba(15, 23, 42, 0.88);
-      border-radius: 14px;
-      padding: 10px 12px;
-      border: 1px solid rgba(31, 41, 55, 0.95);
-    }
-
-    .reason-list {
-      margin-top: 10px;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    @media (max-width: 720px) {
-      .reason-list {
-        grid-template-columns: minmax(0, 1fr);
-      }
-    }
-
-    .reason-pill {
-      background: rgba(15, 23, 42, 0.92);
-      border-radius: 11px;
-      border: 1px solid rgba(31, 41, 55, 0.9);
-      padding: 7px 9px;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      font-size: 11px;
-    }
-
-    .reason-pill span.key {
-      color: #c7d2fe;
+      font-size: 14px;
       font-weight: 500;
     }
 
-    .reason-pill span.value {
-      color: var(--text-soft);
+    .risk-tag .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
     }
 
-    .mini-grid {
+    .risk-tag.high {
+      background: hsla(0, 72%, 60%, 0.15);
+      border: 1px solid hsla(0, 72%, 60%, 0.6);
+      color: hsl(0, 90%, 70%);
+    }
+
+    .risk-tag.high .dot {
+      background: var(--destructive);
+    }
+
+    .risk-tag.medium {
+      background: hsla(45, 93%, 58%, 0.15);
+      border: 1px solid hsla(45, 93%, 58%, 0.6);
+      color: hsl(45, 100%, 65%);
+    }
+
+    .risk-tag.medium .dot {
+      background: var(--warning);
+    }
+
+    .risk-tag.low {
+      background: hsla(160, 84%, 45%, 0.15);
+      border: 1px solid hsla(160, 84%, 45%, 0.6);
+      color: hsl(160, 80%, 55%);
+    }
+
+    .risk-tag.low .dot {
+      background: var(--success);
+    }
+
+    /* Reasons */
+    .reasons-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 6px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
     }
 
-    @media (max-width: 720px) {
-      .mini-grid {
-        grid-template-columns: minmax(0, 1fr);
-      }
+    .reason-card {
+      background: hsla(230, 25%, 15%, 0.5);
+      border: 1px solid hsla(230, 20%, 20%, 0.5);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
     }
 
-    .mini-card {
-      background: rgba(15, 23, 42, 0.92);
-      border-radius: 14px;
-      border: 1px solid rgba(31, 41, 55, 0.95);
-      padding: 10px;
+    .reason-card .key {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .reason-card .value {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Metrics */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .metric-card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, hsla(174, 72%, 56%, 0.5), transparent);
+    }
+
+    .metric-header {
       display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 12px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
     }
 
-    .mini-label {
+    .metric-header span {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .metric-header .icon {
+      color: var(--primary);
+    }
+
+    .metric-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .metric-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Chart */
+    .chart-section {
+      margin-top: 1.5rem;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .chart-header h3 {
+      font-size: 1rem;
+      font-weight: 600;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      font-size: 11px;
-      color: var(--text-soft);
+      gap: 10px;
     }
 
-    .mini-value {
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .mini-meta {
-      font-size: 11px;
-      color: #a5b4fc;
+    .chart-header small {
+      font-size: 12px;
+      color: var(--text-muted);
     }
 
     .chart-container {
-      margin-top: 6px;
-      background: rgba(15, 23, 42, 0.92);
-      border-radius: 14px;
-      padding: 10px;
-      border: 1px solid rgba(31, 41, 55, 0.95);
+      height: 180px;
     }
 
-    .footer-note {
-      margin-top: 10px;
-      font-size: 11px;
-      color: var(--text-soft);
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
+    /* Footer */
+    .footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .container {
+        padding: 1rem;
+      }
+
+      .glass-card {
+        padding: 1.5rem;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .title {
+        font-size: 1.75rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="app-shell">
-    <div class="glass-accent"></div>
-    <div class="content">
+  <div class="container">
+    <!-- INPUT PAGE -->
+    <div id="input-page" class="page active">
       <header class="header">
-        <div class="title-block">
-          <div class="title-chip-row">
-            <div class="logo-orb">AI</div>
-            <div class="title-chip">
-              <span class="dot"></span>
-              <span>Telecom churn prediction</span>
-            </div>
-          </div>
-          <div class="title-main">
-            <h1>Churn <span class="accent">Predictor</span></h1>
-            <p class="subtitle">
-              Enter customer usage details to estimate churn probability from your FastAPI model.
-            </p>
-            <div class="tagline">
-              <div class="tagline-pill"></div>
-              <span>Backed by XGBoost pipeline</span>
-            </div>
+        <div class="header-top">
+          <div class="logo-orb">⚡</div>
+          <div class="status-badge">
+            <span class="dot"></span>
+            AI-Powered Analytics
           </div>
         </div>
-        <div class="header-right">
-          <div class="threshold-pill">
-            <span class="dot"></span>
-            <span>Churn alert threshold:&nbsp;<strong id="threshold-text">40%</strong></span>
-          </div>
-          <div class="segment-badges">
-            <span>📶 Mobile plan</span>
-            <span>📞 Usage & calls</span>
-            <span>🧾 Billing & overage</span>
-          </div>
+        <h1 class="title">Churn <span class="gradient">Predictor</span></h1>
+        <p class="subtitle">Leverage our XGBoost-powered model to identify at-risk customers and take proactive retention actions.</p>
+        <div class="tags">
+          <span class="tag tag-primary">⚡ Mobile Plan</span>
+          <span class="tag tag-accent">📞 Usage & Calls</span>
+          <span class="tag tag-success">🧾 Billing</span>
         </div>
       </header>
 
-      <div class="layout">
-        <!-- LEFT: INPUT FORM -->
-        <section class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">
-                <div class="card-title-pill">1</div>
-                Customer usage profile
-              </div>
-              <div class="card-subtitle">
-                Map directly to FastAPI fields (AccountWeeks, ContractRenewal, DataPlan, etc.).
-              </div>
-            </div>
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-number">1</div>
+          <div>
+            <div class="card-title">Customer Usage Profile</div>
+            <div class="card-subtitle">Enter customer details for churn analysis</div>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="AccountWeeks">Account weeks</label>
+            <input id="AccountWeeks" type="number" class="input" value="50" min="0" />
+            <small>Total weeks the account has been active</small>
           </div>
 
-          <div class="form-grid">
-            <div class="field">
-              <label for="AccountWeeks">Account weeks</label>
-              <input id="AccountWeeks" type="number" class="input" value="50" min="0" />
-              <small>Total weeks the account has been active.</small>
-            </div>
-
-            <div class="field">
-              <label for="ContractRenewal">Contract renewal</label>
-              <select id="ContractRenewal" class="select">
-                <option value="1" selected>Yes (renewed)</option>
-                <option value="0">No (not renewed)</option>
-              </select>
-              <small>1 = renewed, 0 = not renewed.</small>
-            </div>
-
-            <div class="field">
-              <label for="DataPlan">Data plan</label>
-              <select id="DataPlan" class="select">
-                <option value="1" selected>Yes (has data plan)</option>
-                <option value="0">No data plan</option>
-              </select>
-              <small>1 = has data plan, 0 = no.</small>
-            </div>
-
-            <div class="field">
-              <label for="DataUsage">Data usage (GB)</label>
-              <input id="DataUsage" type="number" class="input" value="3.5" min="0" step="0.1" />
-              <small>Average monthly mobile data usage.</small>
-            </div>
-
-            <div class="field">
-              <label for="CustServCalls">Customer service calls</label>
-              <input id="CustServCalls" type="number" class="input" value="1" min="0" />
-              <small>Number of support calls in recent period.</small>
-            </div>
-
-            <div class="field">
-              <label for="DayMins">Day minutes</label>
-              <input id="DayMins" type="number" class="input" value="200" min="0" step="0.1" />
-              <small>Total daytime minutes used.</small>
-            </div>
-
-            <div class="field">
-              <label for="DayCalls">Day calls</label>
-              <input id="DayCalls" type="number" class="input" value="100" min="0" />
-              <small>Number of daytime calls.</small>
-            </div>
-
-            <div class="field">
-              <label for="MonthlyCharge">Monthly charge</label>
-              <input id="MonthlyCharge" type="number" class="input" value="70" min="0" step="0.1" />
-              <small>Current monthly bill amount.</small>
-            </div>
-
-            <div class="field">
-              <label for="OverageFee">Overage fee</label>
-              <input id="OverageFee" type="number" class="input" value="10" min="0" step="0.1" />
-              <small>Additional charges beyond plan.</small>
-            </div>
-
-            <div class="field">
-              <label for="RoamMins">Roaming minutes</label>
-              <input id="RoamMins" type="number" class="input" value="5" min="0" step="0.1" />
-              <small>Minutes used while roaming.</small>
-            </div>
+          <div class="field">
+            <label for="ContractRenewal">Contract renewal</label>
+            <select id="ContractRenewal" class="select">
+              <option value="1" selected>Yes (renewed)</option>
+              <option value="0">No (not renewed)</option>
+            </select>
+            <small>1 = renewed, 0 = not renewed</small>
           </div>
 
-          <div class="inline-row">
-            <button class="primary-btn" id="predict-btn">
-              <span class="icon">🔮</span>
-              <span>Run churn prediction</span>
-            </button>
-          </div>
-        </section>
-
-        <!-- RIGHT: OUTPUT & CHARTS -->
-        <section class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">
-                <div class="card-title-pill">2</div>
-                Prediction & explanation
-              </div>
-              <div class="card-subtitle">
-                Live output from FastAPI /predict endpoint and a visual breakdown.
-              </div>
-            </div>
+          <div class="field">
+            <label for="DataPlan">Data plan</label>
+            <select id="DataPlan" class="select">
+              <option value="1" selected>Yes (has data plan)</option>
+              <option value="0">No data plan</option>
+            </select>
+            <small>1 = has data plan, 0 = no</small>
           </div>
 
-          <div class="prediction-card">
-            <div class="pill-row">
-              <span id="segment-pill">Single customer | API powered</span>
-              <span id="snapshot-pill">Snapshot: latest model prediction</span>
-            </div>
-
-            <div class="risk-indicator">
-              <div>
-                <div class="risk-label">Churn probability</div>
-                <div class="risk-value" id="churn-prob">– – %</div>
-              </div>
-              <div id="risk-tag" class="risk-tag low">
-                <span class="dot"></span>
-                <span id="risk-text">Waiting for prediction</span>
-              </div>
-            </div>
-
-            <div class="gauge-wrapper">
-              <canvas id="gaugeChart" height="140"></canvas>
-            </div>
-
-            <div class="reason-list" id="reason-list"></div>
-
-            <div class="mini-grid">
-              <div class="mini-card">
-                <div class="mini-label">
-                  <span>Revenue snapshot</span>
-                  <span>₹</span>
-                </div>
-                <div class="mini-value" id="revenue-value">– –</div>
-                <div class="mini-meta" id="revenue-meta">Monthly vs lifetime estimate</div>
-              </div>
-
-              <div class="mini-card">
-                <div class="mini-label">
-                  <span>Loyalty signal</span>
-                  <span>📈</span>
-                </div>
-                <div class="mini-value" id="loyalty-score">– –</div>
-                <div class="mini-meta" id="loyalty-meta">1 = high risk, 5 = very loyal</div>
-              </div>
-            </div>
-
-            <div class="chart-container">
-              <div class="mini-label">
-                <span>Top churn drivers (heuristic)</span>
-                <span id="driver-mode">Interpreted from inputs</span>
-              </div>
-              <canvas id="driversChart" height="130"></canvas>
-            </div>
-
-            <div class="footer-note">
-              <span>Make sure FastAPI is running on http://127.0.0.1:8000 with CORS enabled.</span>
-              <span>Fields are mapped directly to your CustomerInput model.</span>
-            </div>
+          <div class="field">
+            <label for="DataUsage">Data usage (GB)</label>
+            <input id="DataUsage" type="number" class="input" value="3.5" min="0" step="0.1" />
+            <small>Average monthly mobile data usage</small>
           </div>
-        </section>
+
+          <div class="field">
+            <label for="CustServCalls">Customer service calls</label>
+            <input id="CustServCalls" type="number" class="input" value="1" min="0" />
+            <small>Number of support calls in recent period</small>
+          </div>
+
+          <div class="field">
+            <label for="DayMins">Day minutes</label>
+            <input id="DayMins" type="number" class="input" value="200" min="0" step="0.1" />
+            <small>Total daytime minutes used</small>
+          </div>
+
+          <div class="field">
+            <label for="DayCalls">Day calls</label>
+            <input id="DayCalls" type="number" class="input" value="100" min="0" />
+            <small>Number of daytime calls</small>
+          </div>
+
+          <div class="field">
+            <label for="MonthlyCharge">Monthly charge</label>
+            <input id="MonthlyCharge" type="number" class="input" value="70" min="0" step="0.1" />
+            <small>Current monthly bill amount</small>
+          </div>
+
+          <div class="field">
+            <label for="OverageFee">Overage fee</label>
+            <input id="OverageFee" type="number" class="input" value="10" min="0" step="0.1" />
+            <small>Additional charges beyond plan</small>
+          </div>
+
+          <div class="field">
+            <label for="RoamMins">Roaming minutes</label>
+            <input id="RoamMins" type="number" class="input" value="5" min="0" step="0.1" />
+            <small>Minutes used while roaming</small>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="predict-btn" class="btn-primary">
+            <span>✨</span>
+            <span>Run Churn Prediction</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="footer">
+        Powered by XGBoost ML Pipeline • Fields mapped to CustomerInput model
+      </div>
+    </div>
+
+    <!-- RESULTS PAGE -->
+    <div id="results-page" class="page">
+      <button id="back-btn" class="btn-back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        New Prediction
+      </button>
+
+      <header class="results-header">
+        <div class="status-badge">Prediction Complete</div>
+        <h1 class="title">Churn <span class="gradient">Analysis</span></h1>
+        <p class="subtitle">Customer risk assessment and breakdown from the XGBoost prediction model.</p>
+      </header>
+
+      <!-- Prediction Result Card -->
+      <div class="glass-card prediction-card">
+        <div class="glow-tl"></div>
+        <div class="glow-br"></div>
+        <p class="prob-label">Churn Probability</p>
+        <div class="gauge-container">
+          <canvas id="gaugeChart" width="200" height="200"></canvas>
+          <div class="gauge-value">
+            <span class="percent" id="prob-value">0%</span>
+            <span class="label">probability</span>
+          </div>
+        </div>
+        <div id="risk-tag" class="risk-tag low">
+          <span class="dot"></span>
+          <span id="risk-text">Low Churn Risk</span>
+        </div>
+      </div>
+
+      <!-- Risk Analysis -->
+      <div class="glass-card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary);">
+            <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
+          </svg>
+          <div class="card-title">Risk Analysis</div>
+        </div>
+        <div class="reasons-grid" id="reasons-list"></div>
+      </div>
+
+      <!-- Metrics -->
+      <div class="metrics-grid">
+        <div class="glass-card metric-card">
+          <div class="metric-header">
+            <span>Revenue Snapshot</span>
+            <span class="icon">💰</span>
+          </div>
+          <div class="metric-value" id="revenue-value">₹0</div>
+          <div class="metric-meta" id="revenue-meta">Monthly: ₹0 | Account age: 0 weeks</div>
+        </div>
+        <div class="glass-card metric-card">
+          <div class="metric-header">
+            <span>Loyalty Signal</span>
+            <span class="icon">❤️</span>
+          </div>
+          <div class="metric-value" id="loyalty-value">0 / 5</div>
+          <div class="metric-meta">Model-inspired loyalty band</div>
+        </div>
+      </div>
+
+      <!-- Drivers Chart -->
+      <div class="glass-card chart-section">
+        <div class="chart-header">
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary);">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V10M15 17V6"/>
+            </svg>
+            Top Churn Drivers
+          </h3>
+          <small>Interpreted from inputs</small>
+        </div>
+        <div class="chart-container">
+          <canvas id="driversChart"></canvas>
+        </div>
+      </div>
+
+      <div class="footer">
+        Analysis based on customer profile data • Model threshold: 40%
       </div>
     </div>
   </div>
 
   <script>
-    const threshold = 0.4;
-    document.getElementById("threshold-text").textContent = Math.round(threshold * 100) + "%";
     const PREDICT_API = "https://project-wumi-pxou4pwpw-chaitanyaphuge17s-projects.vercel.app/predict";
+    const THRESHOLD = 0.4;
 
-    let gaugeChart;
-    let driversChart;
+    let gaugeChart = null;
+    let driversChart = null;
 
+    // Page navigation
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+      window.scrollTo(0, 0);
+    }
+
+    document.getElementById('back-btn').addEventListener('click', () => showPage('input-page'));
+
+    // Get features from form
+    function getFeatures() {
+      return {
+        AccountWeeks: Number(document.getElementById('AccountWeeks').value) || 0,
+        ContractRenewal: Number(document.getElementById('ContractRenewal').value) || 0,
+        DataPlan: Number(document.getElementById('DataPlan').value) || 0,
+        DataUsage: Number(document.getElementById('DataUsage').value) || 0,
+        CustServCalls: Number(document.getElementById('CustServCalls').value) || 0,
+        DayMins: Number(document.getElementById('DayMins').value) || 0,
+        DayCalls: Number(document.getElementById('DayCalls').value) || 0,
+        MonthlyCharge: Number(document.getElementById('MonthlyCharge').value) || 0,
+        OverageFee: Number(document.getElementById('OverageFee').value) || 0,
+        RoamMins: Number(document.getElementById('RoamMins').value) || 0,
+      };
+    }
+
+    // API call
+    async function callPredict(features) {
+      const res = await fetch(PREDICT_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(features),
+      });
+      if (!res.ok) throw new Error('API error: ' + res.status);
+      const data = await res.json();
+      return data.churn_probability;
+    }
+
+    // Create gauge chart
     function createGauge(prob) {
-      const ctx = document.getElementById("gaugeChart").getContext("2d");
+      const ctx = document.getElementById('gaugeChart').getContext('2d');
       if (gaugeChart) gaugeChart.destroy();
-      const value = Math.round(prob * 100);
 
-      const gradient = ctx.createLinearGradient(0, 0, 300, 0);
-      gradient.addColorStop(0, "rgba(34,197,94,0.9)");
-      gradient.addColorStop(0.5, "rgba(234,179,8,0.9)");
-      gradient.addColorStop(1, "rgba(248,113,113,0.95)");
+      const value = prob * 100;
 
       gaugeChart = new Chart(ctx, {
-        type: "doughnut",
+        type: 'doughnut',
         data: {
-          labels: ["Churn", "Safe"],
-          datasets: [
-            {
-              data: [value, 100 - value],
-              backgroundColor: [gradient, "rgba(15,23,42,0.9)"],
-              borderWidth: 0,
-              cutout: "72%",
-            },
-          ],
+          datasets: [{
+            data: [value, 100 - value],
+            backgroundColor: [
+              createGradient(ctx),
+              'hsla(230, 25%, 15%, 0.8)'
+            ],
+            borderWidth: 0,
+            cutout: '78%',
+          }]
         },
         options: {
           rotation: -90,
           circumference: 180,
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: false },
-          },
-        },
+          responsive: false,
+          plugins: { legend: { display: false }, tooltip: { enabled: false } }
+        }
       });
+
+      document.getElementById('prob-value').textContent = Math.round(value) + '%';
     }
 
+    function createGradient(ctx) {
+      const gradient = ctx.createLinearGradient(0, 0, 200, 0);
+      gradient.addColorStop(0, 'hsl(174, 72%, 56%)');
+      gradient.addColorStop(1, 'hsl(280, 70%, 65%)');
+      return gradient;
+    }
+
+    // Create drivers chart
     function createDriversChart(drivers) {
-      const ctx = document.getElementById("driversChart").getContext("2d");
+      const ctx = document.getElementById('driversChart').getContext('2d');
       if (driversChart) driversChart.destroy();
 
       driversChart = new Chart(ctx, {
-        type: "bar",
+        type: 'bar',
         data: {
           labels: drivers.map(d => d.name),
-          datasets: [
-            {
-              label: "Impact on churn",
-              data: drivers.map(d => d.value),
-              backgroundColor: "rgba(129,140,248,0.85)",
-              borderRadius: 6,
-            },
-          ],
+          datasets: [{
+            data: drivers.map(d => d.value * 100),
+            backgroundColor: drivers.map((_, i) => i % 2 === 0 ? 'hsl(174, 72%, 56%)' : 'hsl(280, 70%, 65%)'),
+            borderRadius: 6,
+            maxBarThickness: 28,
+          }]
         },
         options: {
-          indexAxis: "y",
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
           scales: {
             x: {
-              ticks: { color: "#9ca3af", display: false },
-              grid: { display: false },
-              min: 0,
-              max: 1,
+              display: false,
+              max: 100,
             },
             y: {
-              ticks: { color: "#e5e7eb", font: { size: 10 } },
+              ticks: { color: 'hsl(180, 100%, 97%)', font: { size: 12 } },
               grid: { display: false },
-            },
+              border: { display: false }
+            }
           },
-          plugins: {
-            legend: { display: false },
-          },
-        },
+          plugins: { legend: { display: false } }
+        }
       });
     }
 
-    function updateRisk(prob, riskLevel) {
-      const pct = Math.round(prob * 100);
-      const riskTag = document.getElementById("risk-tag");
-      const riskText = document.getElementById("risk-text");
-      const churnProbEl = document.getElementById("churn-prob");
+    // Update risk display
+    function updateRisk(prob) {
+      const tag = document.getElementById('risk-tag');
+      const text = document.getElementById('risk-text');
 
-      churnProbEl.textContent = pct + " %";
+      tag.classList.remove('high', 'medium', 'low');
 
-      if (riskLevel === "high" || prob >= threshold) {
-        riskTag.classList.remove("low");
-        riskTag.classList.add("high");
-        riskText.textContent = "High churn risk";
+      if (prob >= THRESHOLD) {
+        tag.classList.add('high');
+        text.textContent = 'High Churn Risk';
+      } else if (prob >= 0.25) {
+        tag.classList.add('medium');
+        text.textContent = 'Medium Churn Risk';
       } else {
-        riskTag.classList.remove("high");
-        riskTag.classList.add("low");
-        riskText.textContent = riskLevel === "medium" ? "Medium churn risk" : "Low churn risk";
+        tag.classList.add('low');
+        text.textContent = 'Low Churn Risk';
       }
     }
 
-    function updateReasons(prob, features) {
-      const list = document.getElementById("reason-list");
-      list.innerHTML = "";
-
+    // Build reasons
+    function buildReasons(prob, features) {
       const reasons = [];
 
       if (features.AccountWeeks < 20) {
-        reasons.push({
-          key: "Short account age",
-          value: "Newer customers are more likely to experiment with other providers.",
-        });
+        reasons.push({ key: 'Short account age', value: 'Newer customers are more likely to experiment with other providers.' });
       } else {
-        reasons.push({
-          key: "Stable relationship",
-          value: "Customer has stayed for many weeks, indicating some loyalty.",
-        });
+        reasons.push({ key: 'Stable relationship', value: 'Customer has stayed for many weeks, indicating some loyalty.' });
       }
 
       if (!features.ContractRenewal) {
-        reasons.push({
-          key: "No contract renewal",
-          value: "Not renewing can signal dissatisfaction or upcoming churn.",
-        });
+        reasons.push({ key: 'No contract renewal', value: 'Not renewing can signal dissatisfaction or upcoming churn.' });
       } else {
-        reasons.push({
-          key: "Recent renewal",
-          value: "Renewal suggests commitment to the current provider.",
-        });
+        reasons.push({ key: 'Recent renewal', value: 'Renewal suggests commitment to the current provider.' });
       }
 
       if (features.CustServCalls > 3) {
-        reasons.push({
-          key: "Frequent support calls",
-          value: "High support interactions may indicate unresolved issues.",
-        });
+        reasons.push({ key: 'Frequent support calls', value: 'High support interactions may indicate unresolved issues.' });
       }
 
       if (features.OverageFee > 0) {
-        reasons.push({
-          key: "Overage charges",
-          value: "Extra fees beyond plan may push the customer to seek alternatives.",
-        });
+        reasons.push({ key: 'Overage charges', value: 'Extra fees beyond plan may push the customer to seek alternatives.' });
       }
 
-      if (reasons.length === 0) {
-        reasons.push({
-          key: "Neutral risk profile",
-          value: "Usage and billing are within typical ranges.",
-        });
-      }
-
-      reasons.slice(0, 4).forEach(r => {
-        const div = document.createElement("div");
-        div.className = "reason-pill";
-        div.innerHTML = `<span class="key">${r.key}</span><span class="value">${r.value}</span>`;
-        list.appendChild(div);
-      });
+      return reasons.slice(0, 4);
     }
 
-    function updateMiniCards(features, prob) {
-      const revenueValue = document.getElementById("revenue-value");
-      const revenueMeta = document.getElementById("revenue-meta");
-      const loyaltyScore = document.getElementById("loyalty-score");
-      const loyaltyMeta = document.getElementById("loyalty-meta");
-
-      const monthly = Number(features.MonthlyCharge) || 0;
-      const weeks = Number(features.AccountWeeks) || 0;
-      const monthsApprox = weeks / 4.3;
-      const totalRevenue = monthly * monthsApprox;
-
-      revenueValue.textContent = `₹${Math.round(totalRevenue).toLocaleString("en-IN")}`;
-      revenueMeta.textContent = `Monthly: ₹${monthly.toLocaleString("en-IN")} | Account age: ${weeks} weeks`;
-
-      let score;
-      if (prob >= 0.7) score = 1;
-      else if (prob >= 0.5) score = 2;
-      else if (prob >= 0.3) score = 3;
-      else if (prob >= 0.15) score = 4;
-      else score = 5;
-
-      loyaltyScore.textContent = score.toFixed(1);
-      loyaltyMeta.textContent = `Model‑inspired loyalty band (lower churn ⇒ higher score).`;
+    // Update reasons display
+    function updateReasons(reasons) {
+      const container = document.getElementById('reasons-list');
+      container.innerHTML = reasons.map(r => `
+        <div class="reason-card">
+          <div class="key">${r.key}</div>
+          <div class="value">${r.value}</div>
+        </div>
+      `).join('');
     }
 
+    // Update metrics
+    function updateMetrics(features, prob) {
+      const monthly = features.MonthlyCharge || 0;
+      const weeks = features.AccountWeeks || 0;
+      const total = Math.round(monthly * (weeks / 4.3));
+
+      document.getElementById('revenue-value').textContent = '₹' + total.toLocaleString('en-IN');
+      document.getElementById('revenue-meta').textContent = `Monthly: ₹${monthly.toLocaleString('en-IN')} | Account age: ${weeks} weeks`;
+
+      let loyalty;
+      if (prob >= 0.7) loyalty = 1;
+      else if (prob >= 0.5) loyalty = 2;
+      else if (prob >= 0.3) loyalty = 3;
+      else if (prob >= 0.15) loyalty = 4;
+      else loyalty = 5;
+
+      document.getElementById('loyalty-value').textContent = loyalty.toFixed(1) + ' / 5';
+    }
+
+    // Build drivers
     function buildDrivers(features) {
       return [
-        {
-          name: "Account weeks",
-          value: Math.min(features.AccountWeeks / 80, 1),
-        },
-        {
-          name: "Cust. service calls",
-          value: Math.min(features.CustServCalls / 8, 1),
-        },
-        {
-          name: "Monthly charge",
-          value: Math.min(features.MonthlyCharge / 100, 1),
-        },
-        {
-          name: "Overage fee",
-          value: Math.min(features.OverageFee / 40, 1),
-        },
+        { name: 'Account weeks', value: Math.min(features.AccountWeeks / 80, 1) },
+        { name: 'Cust. service calls', value: Math.min(features.CustServCalls / 8, 1) },
+        { name: 'Monthly charge', value: Math.min(features.MonthlyCharge / 100, 1) },
+        { name: 'Overage fee', value: Math.min(features.OverageFee / 40, 1) },
       ];
     }
 
-   async function callApiPredict(payload) {
-    const res = await fetch(PREDICT_API, {
-     method: "POST",
-     headers: { "Content-Type": "application/json" },
-     body: JSON.stringify(payload),
-    });
-   if (!res.ok) throw new Error("API error: " + res.status);
-   const data = await res.json();
-   return data.churn_probability;
- }
+    // Main predict handler
+    document.getElementById('predict-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('predict-btn');
+      const originalText = btn.innerHTML;
 
-    document.getElementById("predict-btn").addEventListener("click", async () => {
-      const features = {
-        AccountWeeks: Number(document.getElementById("AccountWeeks").value || 0),
-        ContractRenewal: Number(document.getElementById("ContractRenewal").value || 0),
-        DataPlan: Number(document.getElementById("DataPlan").value || 0),
-        DataUsage: Number(document.getElementById("DataUsage").value || 0),
-        CustServCalls: Number(document.getElementById("CustServCalls").value || 0),
-        DayMins: Number(document.getElementById("DayMins").value || 0),
-        DayCalls: Number(document.getElementById("DayCalls").value || 0),
-        MonthlyCharge: Number(document.getElementById("MonthlyCharge").value || 0),
-        OverageFee: Number(document.getElementById("OverageFee").value || 0),
-        RoamMins: Number(document.getElementById("RoamMins").value || 0),
-      };
-
-      const btn = document.getElementById("predict-btn");
-      const originalLabel = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = '<span class="icon">✨</span><span>Scoring profile…</span>';
+      btn.innerHTML = '<span>⏳</span><span>Analyzing Profile...</span>';
 
       try {
-        const prob = await callApiPredict(features);
-        const riskLevel = window.lastRiskLevel || "low";
-        updateRisk(prob, riskLevel);
-        createGauge(prob);
-        updateReasons(prob, features);
-        updateMiniCards(features, prob);
-        createDriversChart(buildDrivers(features));
+        const features = getFeatures();
+        const prob = await callPredict(features);
+
+        // Switch to results page
+        showPage('results-page');
+
+        // Update all displays
+        setTimeout(() => {
+          createGauge(prob);
+          updateRisk(prob);
+          updateReasons(buildReasons(prob, features));
+          updateMetrics(features, prob);
+          createDriversChart(buildDrivers(features));
+        }, 100);
+
       } catch (err) {
-        alert("Prediction failed. Check console for details.");
+        alert('Prediction failed. Please check if the API is running.');
         console.error(err);
       } finally {
         btn.disabled = false;
-        btn.innerHTML = originalLabel;
+        btn.innerHTML = originalText;
       }
     });
-
-    // Initial placeholder state
-    createGauge(0.2);
-    createDriversChart([
-      { name: "Account weeks", value: 0.5 },
-      { name: "Cust. service calls", value: 0.3 },
-      { name: "Monthly charge", value: 0.4 },
-      { name: "Overage fee", value: 0.2 },
-    ]);
-    updateRisk(0.2, "low");
-    updateReasons(0.2, {
-      AccountWeeks: 50,
-      ContractRenewal: 1,
-      CustServCalls: 1,
-      OverageFee: 10,
-    });
-    updateMiniCards(
-      {
-        AccountWeeks: 50,
-        MonthlyCharge: 70,
-      },
-      0.2
-    );
   </script>
 </body>
 </html>
