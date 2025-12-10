@@ -11,7 +11,7 @@ app = FastAPI(title="Telecom Churn Prediction API", version="1.0.0")
 origins = [
     "http://127.0.0.1:5500",
     "http://localhost:5500",
-    "http://127.0.0.1:8000",  # if you later serve UI from FastAPI itself
+    "https://project-wumi-pxou4pwpw-chaitanyaphuge17s-projects.vercel.app",  # if you later serve UI from FastAPI itself
 ]
 
 app.add_middleware(

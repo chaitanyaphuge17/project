@@ -752,7 +752,7 @@
   <script>
     const threshold = 0.4;
     document.getElementById("threshold-text").textContent = Math.round(threshold * 100) + "%";
-    const PREDICT_API = "http://127.0.0.1:8000/predict";
+    const PREDICT_API = "https://project-wumi-pxou4pwpw-chaitanyaphuge17s-projects.vercel.app/predict";
 
     let gaugeChart;
     let driversChart;
@@ -954,17 +954,16 @@
       ];
     }
 
-    async function callApiPredict(payload) {
-      const res = await fetch(PREDICT_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error("API error: " + res.status);
-      const data = await res.json();
-      window.lastRiskLevel = data.risk_level;
-      return data.churn_probability;
-    }
+   async function callApiPredict(payload) {
+    const res = await fetch(PREDICT_API, {
+     method: "POST",
+     headers: { "Content-Type": "application/json" },
+     body: JSON.stringify(payload),
+    });
+   if (!res.ok) throw new Error("API error: " + res.status);
+   const data = await res.json();
+   return data.churn_probability;
+ }
 
     document.getElementById("predict-btn").addEventListener("click", async () => {
       const features = {
