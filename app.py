@@ -7,15 +7,15 @@ from io import BytesIO
 
 app = FastAPI(title="Telecom Churn Prediction API", version="1.0.0")
 
-# Allow your HTML origin (adjust port/host if needed)
 origins = [
-    "https://project-etxf.vercel.app",  # your frontend
-    "http://127.0.0.1:5500",            # local testing (optional)
+    "https://project-etxf-457vimp81-chaitanyaphuge17s-projects.vercel.app",  # frontend
+    "http://127.0.0.1:5500",                                               # local dev (optional)
     "http://localhost:5500",
 ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=origins,          # use ["*"] temporarily if needed
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
