@@ -9,11 +9,10 @@ app = FastAPI(title="Telecom Churn Prediction API", version="1.0.0")
 
 # Allow your HTML origin (adjust port/host if needed)
 origins = [
-    "http://127.0.0.1:5500",
+    "https://project-etxf.vercel.app",  # your frontend
+    "http://127.0.0.1:5500",            # local testing (optional)
     "http://localhost:5500",
-    "https://project-wumi-pxou4pwpw-chaitanyaphuge17s-projects.vercel.app",  # if you later serve UI from FastAPI itself
 ]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
