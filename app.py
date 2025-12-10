@@ -4,8 +4,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import joblib, pandas as pd, uvicorn
 from io import BytesIO
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+import os
+
 
 app = FastAPI(title="Telecom Churn Prediction API", version="1.0.0")
+# Serve frontend
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+def serve_home():
+    return FileResponse("static/index.html")
+
 
 origins = [
     "https://project-etxf-457vimp81-chaitanyaphuge17s-projects.vercel.app",  # frontend
