@@ -103,7 +103,7 @@ A production-grade machine learning system for predicting customer churn probabi
    http://localhost:8000
    ```
 
-##  API Endpoints
+## API Endpoints
 
 ### Prediction
 - **POST** `/predict`
